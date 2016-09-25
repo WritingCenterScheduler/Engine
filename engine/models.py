@@ -65,8 +65,8 @@ class Location:
         self.timeslots = []  # A list of requirements
         # ex. [
         #     {
-        #         "type": "1",
-        #         "scalar_weight": 2, # This type is 2x as important to schedule as 1. 
+        #         "type": "1",          # "returners"
+        #         "scalar_weight": 2,   # This type is 2x as important to schedule as 1. 
         #         "requirements" : <a numpy array>
         #     },
         #     {

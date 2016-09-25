@@ -11,3 +11,13 @@
   5. `pip install -r requirements.txt`
 3. run unit tests
   1. `python -m unittest discover`
+
+# Encodings explained
+
+* In employee preferences:
+  * 2 == best
+  * 1 == OK
+  * 0 == bad
+
+*In deciding which employees to schedule first:
+  * higher "type" number determines precidence.  For example, if a type 1 employee is needed, they are scheduled before a type 0.
