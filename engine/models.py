@@ -59,10 +59,31 @@ class ScheduleManager:
 class Location:
 
     def __init__(self):
-        self.timeslots = {}  # A Dictionary
+        """
+        Contains the description of all the location's worker requirements.
+        """
+        self.timeslots = []  # A list of requirements
+        # ex. [
+        #     {
+        #         "type": "1",
+        #         "scalar_weight": 2, # This type is 2x as important to schedule as 1. 
+        #         "requirements" : <a numpy array>
+        #     },
+        #     {
+        #         "type": "0",
+        #         "scalar_weight": 1,
+        #         "requirements": <a numpy array>
+        #     }
+        # ]
         self.schedule = None  # A 3D array 
-        self.need = None  # A numpy array
+
+        # A numpy array
+        self.need = None 
         self.possible_candidates = []
+
+        # A list of locations that this location can swap with.
+        # This means a candidate can start a shift at location a, then swap to b without any time gaps
+        self.can_swap_with = [] 
 
     def add_possible_candidate(self, candidate):
         self.possible_candidates.append(candidate)
@@ -70,7 +91,8 @@ class Location:
     def calculate_need(self):
         """
         Function based on timeslots and availibility of possible candidtates
-        need (at each timeslot) = SUM(candidate availibility * scalar) - (timeslot_need_# * scalar)
+        need (at each timeslot) = Sigma(candidate availibility * scalar) - timeslot_need
+        timeslot need = Sigma(timeslot.requirements * timeslot.scalar_weight)
         """
         pass
 
@@ -98,7 +120,7 @@ class User:
         email="unknown",
         onyen="unknown",
         typecode="000"):
-    
+
         self.name = name
         self.pid = pid
         self.email = email
