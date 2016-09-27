@@ -18,7 +18,7 @@ class ScheduleManager:
         self.shift_length_minutes = shift_length_minutes
         self.shift_start_time = shift_start_time
 
-    def add_location(loc):
+    def add_location(self, loc):
         """
         Adds a location to the list of locations
         """
@@ -28,7 +28,7 @@ class ScheduleManager:
 
         self.locations.append(loc)
 
-    def run_schedule():
+    def run_schedule(self):
         """
         The main part of the algorithm.
         """
@@ -102,7 +102,9 @@ class Location:
 
         Return tuple: need value, self
         """
-        pass
+        coords = np.argmin(self.need, axis=1).tolist() # column major: row, col
+        need_value = self.need[coords[0], coords[1]]
+        return need_value, self
 
     def schedule_highest_need(self):
         """
@@ -143,4 +145,14 @@ class Employee(User):
 
     def __init__(self, availibility):
         self.availibility = availibility # A numpy array
-        Super(Employee, self).__init__()
+        super(Employee, self).__init__()
+
+    def schedule(self, timeslot):
+        """
+        Tells the employee to consider itself scheduled at the timeslot.
+        Should update any internal state necessary, especially it's availability
+
+        :param timeslot: Consider itself scheduled at timeslot
+        :return: none
+        """
+        pass
