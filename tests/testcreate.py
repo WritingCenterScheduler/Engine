@@ -10,10 +10,14 @@ class TestCreate(unittest.TestCase):
 
     def test_add_locations(self):
 
-        candidate1 = models.Employee(sampledata.e1av)
-        candidate2 = models.Employee(sampledata.e2av)
-        candidate3 = models.Employee(sampledata.e3av)
-        candidate4 = models.Employee(sampledata.e4av)
+        tc1 = "010"
+
+        candidate1 = models.Employee(sampledata.e1av, typecode=tc1)
+        candidate2 = models.Employee(sampledata.e2av, typecode=tc1)
+        candidate3 = models.Employee(sampledata.e3av, typecode=tc1)
+        candidate4 = models.Employee(sampledata.e4av, typecode=tc1)
+
+        self.assertTrue(candidate1.typecode == tc1)
 
         location1 = models.Location()
         location1.timeslots = sampledata.loc1
@@ -25,10 +29,13 @@ class TestCreate(unittest.TestCase):
 
         self.sm.add_location(location1)
 
-    def test_run_algorithm(self):
-        """
-        Testcase will be run
-        """
+        self.assertTrue(len(self.sm.locations) >= 1)
+
+        for l in self.sm.locations:
+            l.calculate_need()
+            # print(l.need)
+            print( l.greatest_need() )
+            # print(l.need)
 
 
 if __name__ == "__main__":

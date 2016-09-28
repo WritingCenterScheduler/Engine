@@ -1,6 +1,8 @@
 import numpy as np
 import datetime
 
+from . import config
+
 class ScheduleManager:
 
     def __init__(self, 
@@ -40,9 +42,12 @@ class ScheduleManager:
 
                 location.calculate_need()
 
-            need, highest_need_location = min([location.greatest_need() for location in self.locations])
+            ## Oh god fix this
+            need, coords, highest_need_location = min([location.greatest_need() for location in self.locations])
 
             highest_need_location.schedule_highest_need()
+
+            ## Need to determine if schedule is optimal again...
 
         # Finally...
 
@@ -94,17 +99,44 @@ class Location:
         need (at each timeslot) = Sigma(candidate availibility * scalar) - timeslot_need
         timeslot need = Sigma(timeslot.requirements * timeslot.scalar_weight)
         """
-        pass
+
+        all_candidate_availability = self.timeslots[0]["requirements"] * 0
+
+        for c in self.possible_candidates:
+
+            c_available = c.availibility
+            c_available[c_available>0] = 1
+            c_available[c_available<0] = 0
+
+            # print(c.scalar_type)
+            all_candidate_availability += c_available * config.scalars[c.scalar_type]
+
+        timeslot_need = self.timeslots[0]["requirements"] * 0
+
+        for t in self.timeslots:
+
+            timeslot_need += t["requirements"] * t["scalar_weight"]
+
+        # print(all_candidate_availability)
+        # print(timeslot_need)
+
+        self.need = all_candidate_availability - timeslot_need
 
     def greatest_need(self):
         """
         returns the value of the timeslot with the greatest need (LOWEST NUMBER)
 
-        Return tuple: need value, self
+        Return tuple: (need value, coordinates, self)
         """
-        coords = np.argmin(self.need, axis=1).tolist() # column major: row, col
-        need_value = self.need[coords[0], coords[1]]
-        return need_value, self
+
+        if (self.need is None):
+            raise TypeError("self.need is None, did you calculate_need()?")
+        else:
+            # print(self.need)
+            # print("ARGMIN: " + str(np.argmin(self.need)))
+            coord = np.argmin(self.need)
+            need_value = self.need.flatten()[coord]
+            return need_value, coord, self
 
     def schedule_highest_need(self):
         """
@@ -140,12 +172,16 @@ class User:
     def is_returner(self):
         return self.typecode[1] == "1"
 
+    @property 
+    def scalar_type(self):
+        return self.typecode[1]
+
 
 class Employee(User):
 
-    def __init__(self, availibility):
+    def __init__(self, availibility, **kwargs):
         self.availibility = availibility # A numpy array
-        super(Employee, self).__init__()
+        super(Employee, self).__init__(**kwargs)
 
     def schedule(self, timeslot):
         """
