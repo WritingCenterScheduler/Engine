@@ -5,14 +5,14 @@ from . import config
 
 class ScheduleManager:
 
-    def __init__(self, 
-        shifts_per_day=48, 
-        shift_length_minutes=30, 
+    def __init__(self,
+        shifts_per_day=48,
+        shift_length_minutes=30,
         shift_start_time="08:00"):
         """
         :param shifts_per_day: the numebr of shifts in a given day.
         :param shift_length_minutes: the length of a shift in minutes.
-        :param shift_start_time: A 24hour time when all shifts start.  
+        :param shift_start_time: A 24hour time when all shifts start.
             HH:MM (00:00 through 23:59)
         """
         self.locations = []
@@ -24,7 +24,7 @@ class ScheduleManager:
         """
         Adds a location to the list of locations
         """
-        
+
         # TODO: VERIFY that the location's timeslots and need align with...
         #   shifts per day, shift_length_minutes, shift_start_time
 
@@ -54,7 +54,7 @@ class ScheduleManager:
         self.compute_schedule_optimailty()
 
 
-    def compute_schedule_optimailty(self): 
+    def compute_schedule_optimailty(self):
         """
         Using self.locations, decide how optimal the schedule is
         """
@@ -71,7 +71,7 @@ class Location:
         # ex. [
         #     {
         #         "type": "1",          # "returners"
-        #         "scalar_weight": 2,   # This type is 2x as important to schedule as 1. 
+        #         "scalar_weight": 2,   # This type is 2x as important to schedule as 1.
         #         "requirements" : <a numpy array>
         #     },
         #     {
@@ -80,15 +80,15 @@ class Location:
         #         "requirements": <a numpy array>
         #     }
         # ]
-        self.schedule = None  # A 3D array 
+        self.schedule = None  # A 3D array
 
         # A numpy array
-        self.need = None 
+        self.need = None
         self.possible_candidates = []
 
         # A list of locations that this location can swap with.
         # This means a candidate can start a shift at location a, then swap to b without any time gaps
-        self.can_swap_with = [] 
+        self.can_swap_with = []
 
     def add_possible_candidate(self, candidate):
         self.possible_candidates.append(candidate)
@@ -148,7 +148,7 @@ class Location:
 
 class User:
 
-    def __init__(self, 
+    def __init__(self,
         name="User",
         pid=0,
         email="unknown",
@@ -168,11 +168,11 @@ class User:
     def is_admin(self):
         return self.typecode[0] == "1"
 
-    @property 
+    @property
     def is_returner(self):
         return self.typecode[1] == "1"
 
-    @property 
+    @property
     def scalar_type(self):
         return self.typecode[1]
 
@@ -182,6 +182,7 @@ class Employee(User):
     def __init__(self, availibility, **kwargs):
         self.availibility = availibility # A numpy array
         super(Employee, self).__init__(**kwargs)
+        self.schedule = np.zeros(self.availibility.shape)
 
     def schedule(self, timeslot):
         """
@@ -191,4 +192,5 @@ class Employee(User):
         :param timeslot: Consider itself scheduled at timeslot
         :return: none
         """
-        pass
+        self.schedule[timeslot[0]][timeslot[1]] = 1;
+        self.availability[timeslot[0]][timeslot[1]] = 0;
