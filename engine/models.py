@@ -10,7 +10,7 @@ class ScheduleManager:
         shift_length_minutes=30,
         shift_start_time="08:00"):
         """
-        :param shifts_per_day: the numebr of shifts in a given day.
+        :param shifts_per_day: the number of shifts in a given day.
         :param shift_length_minutes: the length of a shift in minutes.
         :param shift_start_time: A 24hour time when all shifts start.
             HH:MM (00:00 through 23:59)
@@ -93,10 +93,27 @@ class Location:
     def add_possible_candidate(self, candidate):
         self.possible_candidates.append(candidate)
 
+    def sort_candidates_by_total_availability(self):
+        """
+        Sorts the possible_candidates in place by total availability in reverse order.
+        :return: None
+        """
+        self.possible_candidates.sort(key=lambda x: x.total_availability, reverse=True)
+
+    def sort_candidates_by_return_status(self, candidates):
+        """
+        Sorts the possible candidates in place by returning status.
+        :return: None
+        """
+        self.possible_candidates.sort(key=lambda x: x.is_returner())
+
+    def initialize_dimensions(width, height, depth):
+        self.schedule = np.zeros(width, height, depth)
+
     def calculate_need(self):
         """
-        Function based on timeslots and availibility of possible candidtates
-        need (at each timeslot) = Sigma(candidate availibility * scalar) - timeslot_need
+        Function based on timeslots and availability of possible candidtates
+        need (at each timeslot) = Sigma(candidate availability * scalar) - timeslot_need
         timeslot need = Sigma(timeslot.requirements * timeslot.scalar_weight)
         """
 
@@ -104,7 +121,7 @@ class Location:
 
         for c in self.possible_candidates:
 
-            c_available = c.availibility
+            c_available = c.availability
             c_available[c_available>0] = 1
             c_available[c_available<0] = 0
 
@@ -141,10 +158,26 @@ class Location:
     def schedule_highest_need(self):
         """
         Schedules a candidate at the higest need spot,
-        then modifies the candidate availibility to remove the availibility at the time scheduled...
+        then modifies the candidate availability to remove the availability at the time scheduled...
         """
-        pass
-
+        sort_candidates_by_total_availability()
+        sort_candidates_by_return_status()
+        # We need the coord of the timeslot with the greatest need
+        need_val, coord, loc = self.greatest_need()
+        # Unpack coord to separate variables
+        x, y = coord
+        # This is definitely still broken so don't yell at me plz
+        for t in timeslots:
+            if t["type"] is "1" and t["requirements"][x][y] > 0:
+                for i in range(len(self.possible_candidates)):
+                    if possible_candidates[i].is_returner() and possible_candidates[i].is_available_at(coord):
+                        possible_candidates[i].schedule(coord)
+                        break
+            elif t["type"] is not "1" and t["requiremnts"][x][y] > 0:
+                for i in range(len(self.possible_candidates)):
+                    if possible_candidates[i].is_available_at(coord):
+                        possible_candidates[i].schedule(coord)
+                        break
 
 class User:
 
@@ -179,10 +212,35 @@ class User:
 
 class Employee(User):
 
-    def __init__(self, availibility, **kwargs):
-        self.availibility = availibility # A numpy array
+    def __init__(self, availability, **kwargs):
+        self.availability = availability # A numpy array
         super(Employee, self).__init__(**kwargs)
-        self.schedule = np.zeros(self.availibility.shape)
+        self.schedule = np.zeros(self.availability.shape)
+        self.total_availability = self.calculate_total_availability()
+
+    def calculate_total_availability(self):
+        """
+        Updates the total availability of an employee.
+        The total availability is defined as the value indicating an employee's
+        overall availability to work. An employee who can work at many different
+        times throughout the week will have a higher total availability than an
+        employee who has limited availability throughout the week.
+
+        :return: Integer representing total availability
+        """
+
+        # A 1-D array of employee preferences of each scalar type
+        availability_frequencies = np.bincount(self.availability)
+        return (availability_frequencies[2] * 2) + availability_frequencies[1]
+
+    def is_available_at(self, timeslot):
+        """
+        Returns true or false depending on whether employee is available to be scheduled at a specific timeslot
+
+        :return: Boolean
+        """
+        x, y = timeslot
+        return self.availability[x][y] > 0
 
     def schedule(self, timeslot):
         """
@@ -192,5 +250,8 @@ class Employee(User):
         :param timeslot: Consider itself scheduled at timeslot
         :return: none
         """
-        self.schedule[timeslot[0]][timeslot[1]] = 1;
-        self.availability[timeslot[0]][timeslot[1]] = 0;
+        # unpack timeslot
+        x, y = timeslot
+        self.schedule[x][y] = 1;
+        self.total_availability -= self.availability[x][y]
+        self.availability[x][y] = 0;
