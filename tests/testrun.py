@@ -97,32 +97,33 @@ class TestRun(unittest.TestCase):
         self.location1.calculate_need()
 
         # Call the greatest_need() function, which returns integer, tuple, self
-        need_val, timeslot, loc = self.location1.greatest_need()
+        timeslots, loc = self.location1.greatest_need()
 
         # Test whether locations evaluate to same object
         self.assertIs(self.location1, loc)
         # Test that need_value is smallest value in array
-        self.assertEqual(need_val, np.amin(self.location1.need))
+        #self.assertEqual(need_val, np.amin(self.location1.need))
         # Test that timeslot is a list of tuples tuple, and not a list of flattned coordinates
-        self.assertTrue(isinstance(timeslot, tuple))
+        self.assertTrue(isinstance(timeslots, list))
+        self.assertTrue(isinstance(timeslots[0], tuple))
 
-    # def test_schedule_greatest_need(self):
-    #     """
-    #     Tests that the function schedule_greatest_need() correctly assigns a User
-    #     to the calendar and adjusts requirements accordingly.
-    #     """
-    #
-    #     width = len(self.sm.locations[0].timeslots[0]["requirements"])
-    #     height = len(self.sm.locations[0].timeslots[0]["requirements"][0])
-    #     self.sm.locations[0].initialize_dimensions(width, height, 2)
-    #
-    #     # Call the calculate_need() function for a location in schedule_manager
-    #     # This should populate the need array for the Location object
-    #     self.location1.calculate_need()
-    #     need_val, timeslot, loc = self.location1.greatest_need()
-    #     print(timeslot)
-    #     self.location1.schedule_greatest_need()
-    #     print(self.location1.schedule)
+    def test_schedule_greatest_need(self):
+        """
+        Tests that the function schedule_greatest_need() correctly assigns a User
+        to the calendar and adjusts requirements accordingly.
+        """
+
+        width = len(self.sm.locations[0].timeslots[0]["requirements"])
+        height = len(self.sm.locations[0].timeslots[0]["requirements"][0])
+        self.sm.locations[0].initialize_dimensions(width, height, 2)
+
+        # Call the calculate_need() function for a location in schedule_manager
+        # This should populate the need array for the Location object
+        self.location1.calculate_need()
+        timeslots, loc = self.location1.greatest_need()
+        #print(timeslots)
+        self.location1.schedule_greatest_need()
+        print(self.location1.schedule)
 
 
 if __name__ == "__main__":

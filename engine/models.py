@@ -91,7 +91,7 @@ class Location:
         self.possible_candidates.sort(key=lambda x: x.is_returner())
 
     def initialize_dimensions(self, width, height, depth):
-        self.schedule = np.empty((width, height, depth))
+        self.schedule = np.zeros((width, height, depth))
 
     def calculate_need(self):
         """
@@ -127,9 +127,14 @@ class Location:
         if (self.need is None):
             raise TypeError("self.need is None, did you calculate_need()?")
         else:
-            coord = np.unravel_index(np.argmin(self.need), self.need.shape)
-            need_value = self.need[coord[0]][coord[1]]
-            return need_value, coord, self
+            coords = []
+            ceiling = np.amax(self.need)
+            while np.amin(self.need) <= ceiling :
+                coord = np.unravel_index(np.argmin(self.need), self.need.shape)
+                coords.append(coord)
+                self.need[coord[0]][coord[1]] = ceiling + 1
+
+            return coords, self
 
     def schedule_greatest_need(self):
         """
@@ -139,20 +144,26 @@ class Location:
         self.sort_candidates_by_total_availability()
         self.sort_candidates_by_return_status()
         # We need the coord of the timeslot with the greatest need
-        need_val, coord, loc = self.greatest_need()
+        coords, loc = self.greatest_need()
         # Unpack coord to separate variables
-        x, y = coord
-        for t in self.timeslots:
-            if t["requirements"][x][y] > 0:
-                for i in range(len(self.possible_candidates)):
-                    if self.possible_candidates[i].is_available_at(coord) and t["requirements"][x][y] > 0:
-                        self.possible_candidates[i].schedule_at(coord)
-                        if self.schedule[x][y][0] is None:
-                            self.schedule[x][y][0] = self.possible_candidates[i].pid
-                        else:
-                            self.schedule[x][y][1] = self.possible_candidates[i].pid
-                        t["requirements"][x][y] -= 1
-                        self.calculate_need()
+
+        for coord in coords:
+            x, y = coord
+            for t in self.timeslots:
+                if t["requirements"][x][y] > 0:
+                    for i in range(len(self.possible_candidates)):
+                        if self.possible_candidates[i].is_available_at(coord) and t["requirements"][x][y] > 0:
+                            self.possible_candidates[i].schedule_at(coord)
+                            if self.schedule[x][y][0] == 0:
+                                self.schedule[x][y][0] = self.possible_candidates[i].pid
+                                #self.schedule[x][y][0] = 5
+                                #print (self.possible_candidates[i].pid)
+                            else:
+                                self.schedule[x][y][1] = self.possible_candidates[i].pid
+                                print ("schedule suceeded")
+                            t["requirements"][x][y] -= 1
+                            self.calculate_need()
+                            break
 
 class User:
 
