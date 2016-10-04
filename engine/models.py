@@ -36,18 +36,13 @@ class ScheduleManager:
         """
         schedule_optimal = False
 
-        while not schedule_optimal:
-
-            for location in self.locations:
-
-                location.calculate_need()
-
-            ## Oh god fix this
-            need, coords, highest_need_location = min([location.greatest_need() for location in self.locations])
-
-            highest_need_location.schedule_highest_need()
-
-            ## Need to determine if schedule is optimal again...
+        for location in self.locations:
+            for timeslot in location.timeslots:
+                for i in range(len(timeslot["requirements"])):
+                    for j in range(len(timeslot["requirements"][0])):
+                        if timeslot["requirements"][i][j] > 0:
+                            location.calculate_need()
+                            location.schedule_greatest_need()
 
         # Finally...
 
@@ -67,19 +62,7 @@ class Location:
         """
         Contains the description of all the location's worker requirements.
         """
-        self.timeslots = []  # A list of requirements
-        # ex. [
-        #     {
-        #         "type": "1",          # "returners"
-        #         "scalar_weight": 2,   # This type is 2x as important to schedule as 1.
-        #         "requirements" : <a numpy array>
-        #     },
-        #     {
-        #         "type": "0",
-        #         "scalar_weight": 1,
-        #         "requirements": <a numpy array>
-        #     }
-        # ]
+        self.timeslots = []
         self.schedule = None  # A 3D array
 
         # A numpy array
@@ -100,15 +83,15 @@ class Location:
         """
         self.possible_candidates.sort(key=lambda x: x.total_availability, reverse=True)
 
-    def sort_candidates_by_return_status(self, candidates):
+    def sort_candidates_by_return_status(self):
         """
         Sorts the possible candidates in place by returning status.
         :return: None
         """
         self.possible_candidates.sort(key=lambda x: x.is_returner())
 
-    def initialize_dimensions(width, height, depth):
-        self.schedule = np.zeros(width, height, depth)
+    def initialize_dimensions(self, width, height, depth):
+        self.schedule = np.empty((width, height, depth))
 
     def calculate_need(self):
         """
@@ -125,7 +108,6 @@ class Location:
             c_available[c_available>0] = 1
             c_available[c_available<0] = 0
 
-            # print(c.scalar_type)
             all_candidate_availability += c_available * config.scalars[c.scalar_type]
 
         timeslot_need = self.timeslots[0]["requirements"] * 0
@@ -133,9 +115,6 @@ class Location:
         for t in self.timeslots:
 
             timeslot_need += t["requirements"] * t["scalar_weight"]
-
-        # print(all_candidate_availability)
-        # print(timeslot_need)
 
         self.need = all_candidate_availability - timeslot_need
 
@@ -145,45 +124,41 @@ class Location:
 
         Return tuple: (need value, coordinates, self)
         """
-
         if (self.need is None):
             raise TypeError("self.need is None, did you calculate_need()?")
         else:
-            # print(self.need)
-            # print("ARGMIN: " + str(np.argmin(self.need)))
-            coord = np.argmin(self.need)
-            need_value = self.need.flatten()[coord]
+            coord = np.unravel_index(np.argmin(self.need), self.need.shape)
+            need_value = self.need[coord[0]][coord[1]]
             return need_value, coord, self
 
-    def schedule_highest_need(self):
+    def schedule_greatest_need(self):
         """
         Schedules a candidate at the higest need spot,
         then modifies the candidate availability to remove the availability at the time scheduled...
         """
-        sort_candidates_by_total_availability()
-        sort_candidates_by_return_status()
+        self.sort_candidates_by_total_availability()
+        self.sort_candidates_by_return_status()
         # We need the coord of the timeslot with the greatest need
         need_val, coord, loc = self.greatest_need()
         # Unpack coord to separate variables
         x, y = coord
-        # This is definitely still broken so don't yell at me plz
-        for t in timeslots:
-            if t["type"] is "1" and t["requirements"][x][y] > 0:
+        for t in self.timeslots:
+            if t["requirements"][x][y] > 0:
                 for i in range(len(self.possible_candidates)):
-                    if possible_candidates[i].is_returner() and possible_candidates[i].is_available_at(coord):
-                        possible_candidates[i].schedule(coord)
-                        break
-            elif t["type"] is not "1" and t["requiremnts"][x][y] > 0:
-                for i in range(len(self.possible_candidates)):
-                    if possible_candidates[i].is_available_at(coord):
-                        possible_candidates[i].schedule(coord)
-                        break
+                    if self.possible_candidates[i].is_available_at(coord) and t["requirements"][x][y] > 0:
+                        self.possible_candidates[i].schedule_at(coord)
+                        if self.schedule[x][y][0] is None:
+                            self.schedule[x][y][0] = self.possible_candidates[i].pid
+                        else:
+                            self.schedule[x][y][1] = self.possible_candidates[i].pid
+                        t["requirements"][x][y] -= 1
+                        self.calculate_need()
 
 class User:
 
     def __init__(self,
         name="User",
-        pid=0,
+        pid=-1,
         email="unknown",
         onyen="unknown",
         typecode="000"):
@@ -202,12 +177,11 @@ class User:
         return self.typecode[0] == "1"
 
     @property
-    def is_returner(self):
-        return self.typecode[1] == "1"
-
-    @property
     def scalar_type(self):
         return self.typecode[1]
+
+    def is_returner(self):
+        return self.typecode[1] == "1"
 
 
 class Employee(User):
@@ -228,9 +202,10 @@ class Employee(User):
 
         :return: Integer representing total availability
         """
-
         # A 1-D array of employee preferences of each scalar type
-        availability_frequencies = np.bincount(self.availability)
+        availability_frequencies = np.zeros(3)
+        for slot in self.availability.flat:
+            availability_frequencies[slot] += 1
         return (availability_frequencies[2] * 2) + availability_frequencies[1]
 
     def is_available_at(self, timeslot):
@@ -242,7 +217,7 @@ class Employee(User):
         x, y = timeslot
         return self.availability[x][y] > 0
 
-    def schedule(self, timeslot):
+    def schedule_at(self, timeslot):
         """
         Tells the employee to consider itself scheduled at the timeslot.
         Should update any internal state necessary, especially it's availability
@@ -250,8 +225,9 @@ class Employee(User):
         :param timeslot: Consider itself scheduled at timeslot
         :return: none
         """
-        # unpack timeslot
-        x, y = timeslot
-        self.schedule[x][y] = 1;
-        self.total_availability -= self.availability[x][y]
-        self.availability[x][y] = 0;
+        if self.is_available_at(timeslot):
+            # unpack timeslot
+            x, y = timeslot
+            self.schedule[x][y] = 1
+            self.total_availability -= self.availability[x][y]
+            self.availability[x][y] = 0
