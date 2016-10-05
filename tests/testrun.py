@@ -123,7 +123,14 @@ class TestRun(unittest.TestCase):
         timeslots, loc = self.location1.greatest_need()
         #print(timeslots)
         self.location1.schedule_greatest_need()
-        print(self.location1.schedule)
+        for x in range(self.location1.schedule.shape[0]) :
+            for y in range(self.location1.schedule.shape[1]) :
+                for z in range(self.location1.schedule.shape[2]) :
+                    candidate = self.location1.search_PID(self.location1.schedule[x][y][z])
+                    if(candidate != None ) :
+                        self.assertFalse(candidate.is_available_at((x,y)))
+                        self.assertTrue(candidate.schedule[x][y] == 1)
+
 
 
 if __name__ == "__main__":

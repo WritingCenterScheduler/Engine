@@ -93,6 +93,13 @@ class Location:
     def initialize_dimensions(self, width, height, depth):
         self.schedule = np.zeros((width, height, depth))
 
+    def search_PID(self, PID):
+        for p in self.possible_candidates:
+            if p.pid == PID :
+                return p
+        return None
+
+
     def calculate_need(self):
         """
         Function based on timeslots and availability of possible candidtates
