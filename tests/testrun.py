@@ -106,8 +106,7 @@ class TestRun(unittest.TestCase):
 
         # Test whether locations evaluate to same object
         self.assertIs(self.location1, loc)
-        # Test that need_value is smallest value in array
-        #self.assertEqual(need_val, np.amin(self.location1.need))
+
         # Test that timeslot is a list of tuples tuple, and not a list of flattned coordinates
         self.assertTrue(isinstance(timeslots, list))
         self.assertTrue(isinstance(timeslots[0], tuple))
@@ -126,7 +125,6 @@ class TestRun(unittest.TestCase):
         # This should populate the need array for the Location object
         self.location1.calculate_need()
         timeslots, loc = self.location1.greatest_need()
-        #print(timeslots)
         self.location1.schedule_greatest_need()
         self.location1.schedule_greatest_need()
         for x in range(self.location1.schedule.shape[0]) :
@@ -137,7 +135,15 @@ class TestRun(unittest.TestCase):
                         self.assertFalse(candidate.is_available_at((x,y)))
                         self.assertTrue(candidate.schedule[x][y] == 1)
         #print(self.location1.schedule)
-
+        a = np.zeros((self.location1.schedule.shape[0],self.location1.schedule.shape[1]))
+        b = np.zeros(a.shape)
+        for x in range(a.shape[0]) :
+            for y in range(a.shape[1]) :
+                a[x][y] = self.location1.schedule[x][y][0]
+                b[x][y] = self.location1.schedule[x][y][1]
+        print("\n")
+        print(a)
+        print(b)
 
 if __name__ == "__main__":
     unittest.main()

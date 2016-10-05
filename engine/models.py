@@ -215,7 +215,6 @@ class Employee(User):
         overall availability to work. An employee who can work at many different
         times throughout the week will have a higher total availability than an
         employee who has limited availability throughout the week.
-
         :return: Integer representing total availability
         """
         # A 1-D array of employee preferences of each scalar type
@@ -227,7 +226,6 @@ class Employee(User):
     def is_available_at(self, timeslot):
         """
         Returns true or false depending on whether employee is available to be scheduled at a specific timeslot
-
         :return: Boolean
         """
         x, y = timeslot
@@ -237,7 +235,6 @@ class Employee(User):
         """
         Tells the employee to consider itself scheduled at the timeslot.
         Should update any internal state necessary, especially it's availability
-
         :param timeslot: Consider itself scheduled at timeslot
         :return: none
         """
