@@ -163,11 +163,9 @@ class Location:
                             self.possible_candidates[i].schedule_at(coord)
                             if self.schedule[x][y][0] == 0:
                                 self.schedule[x][y][0] = self.possible_candidates[i].pid
-                                #self.schedule[x][y][0] = 5
-                                #print (self.possible_candidates[i].pid)
                             else:
                                 self.schedule[x][y][1] = self.possible_candidates[i].pid
-                                print ("schedule suceeded")
+
                             t["requirements"][x][y] -= 1
                             self.calculate_need()
                             break

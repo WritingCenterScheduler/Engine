@@ -12,13 +12,18 @@ class TestRun(unittest.TestCase):
         # Create Test Employee
         self.tc1 = "010"
         self.candidate1 = models.Employee(sampledata.e1av, typecode=self.tc1, pid=1)
-
+        self.candidate2 = models.Employee(sampledata.e2av, typecode=self.tc1, pid=2)
+        self.candidate3 = models.Employee(sampledata.e3av, typecode=self.tc1, pid=3)
+        self.candidate4 = models.Employee(sampledata.e4av, typecode=self.tc1, pid=4)
         # Create Test Location
         self.location1 = models.Location()
         self.location1.timeslots = sampledata.loc1
 
         # Add employee to location and location to schedule manager
         self.location1.add_possible_candidate(self.candidate1)
+        self.location1.add_possible_candidate(self.candidate2)
+        self.location1.add_possible_candidate(self.candidate3)
+        self.location1.add_possible_candidate(self.candidate4)
         self.sm.add_location(self.location1)
 
     def tearDown(self):
@@ -123,6 +128,7 @@ class TestRun(unittest.TestCase):
         timeslots, loc = self.location1.greatest_need()
         #print(timeslots)
         self.location1.schedule_greatest_need()
+        self.location1.schedule_greatest_need()
         for x in range(self.location1.schedule.shape[0]) :
             for y in range(self.location1.schedule.shape[1]) :
                 for z in range(self.location1.schedule.shape[2]) :
@@ -130,7 +136,7 @@ class TestRun(unittest.TestCase):
                     if(candidate != None ) :
                         self.assertFalse(candidate.is_available_at((x,y)))
                         self.assertTrue(candidate.schedule[x][y] == 1)
-
+        #print(self.location1.schedule)
 
 
 if __name__ == "__main__":
