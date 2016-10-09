@@ -73,6 +73,8 @@ class Location:
         # This means a candidate can start a shift at location a, then swap to b without any time gaps
         self.can_swap_with = []
 
+    def populate_
+
     def add_possible_candidate(self, candidate):
         self.possible_candidates.append(candidate)
 
@@ -170,7 +172,12 @@ class Location:
                             self.calculate_need()
                             break
 
-class User:
+class User(Document):
+    last_name = StringField(requred=True)
+    first_name = StringField(requred=True)
+    pid = IntField()
+    email = EmailField()
+    typecode = IntField()
 
     def __init__(self,
         name="User",
@@ -187,6 +194,7 @@ class User:
             # (0/1)XXXX... determines not admin/admin
             # X(0/1)XXX... determines new/returning
             # XX(0/1)XX... determines something else...?
+        self.save()
 
     @property
     def is_admin(self):
@@ -201,11 +209,19 @@ class User:
 
 
 class Employee(User):
+    
+    self.availibility_list = ListField()
 
     def __init__(self, availability, **kwargs):
-        self.availability = availability # A numpy array
         super(Employee, self).__init__(**kwargs)
-        self.schedule = np.zeros(self.availability.shape)
+        self.populate_availability()
+
+    def populate_availability(self):
+        """
+        Called after loading the application from db
+        """
+        self.availibility = np.array( self.availibility_list )
+        self.schedule = np.zeros(self.availibility.shape)
         self.total_availability = self.calculate_total_availability()
 
     def calculate_total_availability(self):
