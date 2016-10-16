@@ -35,7 +35,6 @@ class ScheduleManager:
         The main part of the algorithm.
         """
         schedule_optimal = False
-
         for location in self.locations:
             for timeslot in location.timeslots:
                 for i in range(len(timeslot["requirements"])):
@@ -64,6 +63,7 @@ class Location:
         """
         self.timeslots = []
         self.schedule = None  # A 3D array
+        self.name = ""
 
         # A numpy array
         self.need = None

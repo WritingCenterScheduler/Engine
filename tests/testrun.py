@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from engine import models
+from copy import deepcopy
 
 from . import sampledata
 
@@ -15,16 +16,30 @@ class TestRun(unittest.TestCase):
         self.candidate2 = models.Employee(sampledata.e2av, typecode=self.tc1, pid=2)
         self.candidate3 = models.Employee(sampledata.e3av, typecode=self.tc1, pid=3)
         self.candidate4 = models.Employee(sampledata.e4av, typecode=self.tc1, pid=4)
+
         # Create Test Location
         self.location1 = models.Location()
-        self.location1.timeslots = sampledata.loc1
+        loc1_timeslots = deepcopy(sampledata.loc1)
+        self.location1.timeslots = loc1_timeslots
+        self.location1.name = "LOCATION 1"
+        self.location2 = models.Location()
+        loc2_timeslots = deepcopy(sampledata.loc2)
+        self.location2.timeslots = loc2_timeslots
+        self.location2.name = "LOCATION 2"
 
         # Add employee to location and location to schedule manager
         self.location1.add_possible_candidate(self.candidate1)
         self.location1.add_possible_candidate(self.candidate2)
         self.location1.add_possible_candidate(self.candidate3)
         self.location1.add_possible_candidate(self.candidate4)
+
+        self.location2.add_possible_candidate(self.candidate1)
+        self.location2.add_possible_candidate(self.candidate2)
+        self.location2.add_possible_candidate(self.candidate3)
+        self.location2.add_possible_candidate(self.candidate4)
+
         self.sm.add_location(self.location1)
+        self.sm.add_location(self.location2)
 
     def tearDown(self):
         del self.sm
@@ -144,6 +159,30 @@ class TestRun(unittest.TestCase):
         print("\n")
         print(a)
         print(b)
+
+    def test_schedule_multiple_locations(self):
+        """
+        Tests the ScheduleManager function run_schedule for multiple locations.
+        Note that this test does not schedule by priority but simply by looping
+        through all locations and calling schedule_greatest_need on each
+        """
+        for l in self.sm.locations:
+            width = len(l.timeslots[0]["requirements"])
+            height = len(l.timeslots[0]["requirements"][0])
+            l.initialize_dimensions(width, height, 2)
+        self.sm.run_schedule()
+
+        for l in self.sm.locations:
+            a = np.zeros((l.schedule.shape[0],l.schedule.shape[1]))
+            b = np.zeros(a.shape)
+            for x in range(a.shape[0]) :
+                for y in range(a.shape[1]) :
+                    a[x][y] = l.schedule[x][y][0]
+                    b[x][y] = l.schedule[x][y][1]
+            print("\n")
+            print(l.name)
+            print(a)
+            print(b)
 
 if __name__ == "__main__":
     unittest.main()
