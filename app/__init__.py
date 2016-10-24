@@ -9,15 +9,15 @@ from flask_login import LoginManager
 from mongoengine import *
 
 # import local
-from . import config
-from . import models
+from . import db_config
+from . import db_models
 
 login_manager = LoginManager()
 schedule_app = Flask(__name__)
 login_manager.init_app(schedule_app)
 
 # configure the app
-schedule_app.config["SECRET_KEY"] = config.SECRET_KEY
+schedule_app.config["SECRET_KEY"] = db_config.SECRET_KEY
 
 
 @login_manager.user_loader

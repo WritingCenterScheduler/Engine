@@ -1,8 +1,8 @@
-from . import config
+from . import db_config
 from mongoengine import *
 
 # Setup the mongo connection
-connect(config.DB_NAME)
+connect(db_config.DB_NAME)
 
 class Location(Document):
     name = StringField(required=True)
@@ -14,8 +14,8 @@ class Location(Document):
 
     def init(self,
             name="Unknown Location",
-            open_at=config.DEFAULT_OPEN,
-            close_at=config.DEFAULT_CLOSE,
+            open_at=db_config.DEFAULT_OPEN,
+            close_at=db_config.DEFAULT_CLOSE,
             code=-1 # -1 should never happen
         ):
 
@@ -23,8 +23,8 @@ class Location(Document):
         self.code = code
         self.open_at = open_at
         self.close_at = close_at
-        self.resolution_minutes = config.TIMESLOT_SIZE_MIN
-        self.requirements = config.DEFAULT_LOCATION_REQUIREMENTS
+        self.resolution_minutes = db_config.TIMESLOT_SIZE_MIN
+        self.requirements = db_config.DEFAULT_LOCATION_REQUIREMENTS
 
 class Schedule(Document):
     name = StringField(requred=True)
@@ -57,8 +57,8 @@ class User(Document):
             # (0/1)XXXX... determines not admin/admin
             # X(0/1)XXX... determines new/returning
             # XX(0/1)XX... determines something else...?
-        self.resolution_minutes = config.TIMESLOT_SIZE_MIN
-        self.availability = config.DEFAULT_AVAILABILITY
+        self.resolution_minutes = db_config.TIMESLOT_SIZE_MIN
+        self.availability = db_config.DEFAULT_AVAILABILITY
 
 
     @property

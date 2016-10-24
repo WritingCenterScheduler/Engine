@@ -10,7 +10,7 @@ from app import load_user
 # import Mongo Exceptions
 from mongoengine import MultipleObjectsReturned, DoesNotExist, NotUniqueError
 
-from .. import models
+from .. import db_models
 from .. import responses
 
 @schedule_app.route("/user", methods=["POST"])
@@ -21,12 +21,12 @@ def add_user():
     try:
         print(request.data)
         data = json.loads(request.data.decode("utf-8"))
-    
+
     except Exception as e:
         return responses.invalid(request.url, e)
 
     u = models.User()
-    
+
     try:
         u.init(
             pid=data['pid'],

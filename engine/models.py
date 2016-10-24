@@ -35,7 +35,6 @@ class ScheduleManager:
         The main part of the algorithm.
         """
         schedule_optimal = False
-
         for location in self.locations:
             for timeslot in location.timeslots:
                 for i in range(len(timeslot["requirements"])):
@@ -64,6 +63,7 @@ class Location:
         """
         self.timeslots = []
         self.schedule = None  # A 3D array
+        self.name = ""
 
         # A numpy array
         self.need = None
@@ -128,7 +128,6 @@ class Location:
     def greatest_need(self):
         """
         returns the value of the timeslot with the greatest need (LOWEST NUMBER)
-
         Return tuple: (need value, coordinates, self)
         """
         if (self.need is None):
@@ -170,12 +169,7 @@ class Location:
                             self.calculate_need()
                             break
 
-class User(Document):
-    last_name = StringField(requred=True)
-    first_name = StringField(requred=True)
-    pid = IntField()
-    email = EmailField()
-    typecode = IntField()
+class User:
 
     def __init__(self,
         name="User",
@@ -192,7 +186,6 @@ class User(Document):
             # (0/1)XXXX... determines not admin/admin
             # X(0/1)XXX... determines new/returning
             # XX(0/1)XX... determines something else...?
-        self.save()
 
     @property
     def is_admin(self):
@@ -208,18 +201,10 @@ class User(Document):
 
 class Employee(User):
 
-    self.availibility_list = ListField()
-
     def __init__(self, availability, **kwargs):
+        self.availability = availability # A numpy array
         super(Employee, self).__init__(**kwargs)
-        self.populate_availability()
-
-    def populate_availability(self):
-        """
-        Called after loading the application from db
-        """
-        self.availibility = np.array( self.availibility_list )
-        self.schedule = np.zeros(self.availibility.shape)
+        self.schedule = np.zeros(self.availability.shape)
         self.total_availability = self.calculate_total_availability()
 
     def calculate_total_availability(self):
