@@ -1,18 +1,18 @@
-from mongoengine import *
 from . import config
+from mongoengine import *
 
 # Setup the mongo connection
 connect(config.DB_NAME)
 
 class Location(Document):
-    name = StringField(requred=True)
+    name = StringField(required=True)
     code = IntField(unique=True)
-    open_at = StringField(requred=True)
-    close_at = StringField(requred=True)
+    open_at = StringField(required=True)
+    close_at = StringField(required=True)
     requirements = DictField()
     resolution_minutes = IntField()
 
-    def init(self, 
+    def init(self,
             name="Unknown Location",
             open_at=config.DEFAULT_OPEN,
             close_at=config.DEFAULT_CLOSE,
@@ -31,9 +31,9 @@ class Schedule(Document):
 
 
 class User(Document):
-    last_name = StringField(requred=True)
-    first_name = StringField(requred=True)
-    pid = IntField(unique=True)
+    last_name = StringField(required=True)
+    first_name = StringField(required=True)
+    pid = IntField(unique=True, required=True)
     email = EmailField()
     typecode = StringField()
     availability = DictField()

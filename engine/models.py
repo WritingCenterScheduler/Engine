@@ -73,8 +73,6 @@ class Location:
         # This means a candidate can start a shift at location a, then swap to b without any time gaps
         self.can_swap_with = []
 
-    def populate_
-
     def add_possible_candidate(self, candidate):
         self.possible_candidates.append(candidate)
 
@@ -209,7 +207,7 @@ class User(Document):
 
 
 class Employee(User):
-    
+
     self.availibility_list = ListField()
 
     def __init__(self, availability, **kwargs):

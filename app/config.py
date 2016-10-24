@@ -1,6 +1,7 @@
 import uuid
 
-SECRET_KEY = uuid.uuid4()
+# SECRET_KEY = uuid.uuid4()
+SECRET_KEY = 'secret'
 TIMESLOT_SIZE_MIN = 30
 TIMESLOTS_PER_DAY = 48
 DEFAULT_OPEN = "8:30"
@@ -8,6 +9,12 @@ DEFAULT_CLOSE = "19:00"
 
 # Database config
 DB_NAME = "scheduler"
+
+DEFAULT_TIMESLOT_NEED = {
+    "a": 0,
+    "s1": 0,
+    "s2": 1,
+}
 
 # Default to NOT available
 DEFAULT_AVAILABILITY = {
@@ -28,10 +35,4 @@ DEFAULT_LOCATION_REQUIREMENTS = {
     "thu": [DEFAULT_TIMESLOT_NEED for i in range(TIMESLOTS_PER_DAY)],
     "fri": [DEFAULT_TIMESLOT_NEED for i in range(TIMESLOTS_PER_DAY)],
     "sat": [DEFAULT_TIMESLOT_NEED for i in range(TIMESLOTS_PER_DAY)],
-}
-
-DEFAULT_TIMESLOT_NEED = {
-    "a": 0,
-    "s1": 0,
-    "s2": 1,
 }
