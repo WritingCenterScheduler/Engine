@@ -57,16 +57,18 @@ def db_users():
 def db_delete_user():
     pid = request.args.get('pid')
     try:
-        while(True):
-            if pid == 'all':
+        if pid == 'all':
+            while(True):
                 u = db_models.User.objects
                 if u.to_json() != []:
                     u = u.first()
-            elif pid is None:
-                return "Specify pid of user to delete"
-            else:
-                u = db_models.User.objects.get(pid=pid)
+                u.delete()
+        elif pid is None:
+            return "Specify pid of user to delete"
+        else:
+            u = db_models.User.objects.get(pid=pid)
             u.delete()
+            return "Deleted ONE"
     except:
         return "Done"
     return "Done"
