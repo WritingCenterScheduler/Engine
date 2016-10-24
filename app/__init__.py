@@ -23,7 +23,7 @@ schedule_app.config["SECRET_KEY"] = db_config.SECRET_KEY
 @login_manager.user_loader
 def load_user(pid):
     try:
-        return models.User.objects.get(pid=pid)
+        return db_models.User.objects.get(pid=pid)
     except MultipleObjectsReturned as e:
         return None
     except DoesNotExist as e:
@@ -37,7 +37,7 @@ def index():
 def db_test():
     try:
         pid = request.args.get('pid')
-        u = models.User()
+        u = db_models.User()
         u.init(pid=pid)
         u.save()
     except NotUniqueError:
@@ -47,7 +47,7 @@ def db_test():
 @schedule_app.route("/db/test/list_users")
 def db_users():
     try:
-        return models.User.objects.to_json()
+        return db_models.User.objects.to_json()
     except DoesNotExist:
         return "ERROR: Database does not contain any users"
     except:
@@ -59,13 +59,13 @@ def db_delete_user():
     try:
         while(True):
             if pid == 'all':
-                u = models.User.objects
+                u = db_models.User.objects
                 if u.to_json() != []:
                     u = u.first()
             elif pid is None:
                 return "Specify pid of user to delete"
             else:
-                u = models.User.objects.get(pid=pid)
+                u = db_models.User.objects.get(pid=pid)
             u.delete()
     except:
         return "Done"

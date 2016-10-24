@@ -45,7 +45,8 @@ class User(Document):
             pid=-1, # -1 should never happen
             email="unknown@unc.edu",
             onyen="unknown",
-            typecode="000"
+            typecode="000",
+            availability = db_config.DEFAULT_AVAILABILITY
         ):
 
         self.last_name = last_name
@@ -58,7 +59,7 @@ class User(Document):
             # X(0/1)XXX... determines new/returning
             # XX(0/1)XX... determines something else...?
         self.resolution_minutes = db_config.TIMESLOT_SIZE_MIN
-        self.availability = db_config.DEFAULT_AVAILABILITY
+        self.availability = availability
 
 
     @property
