@@ -1,38 +1,47 @@
-import unittest
+import unittest, copy, random
 import numpy as np
-from engine import models
-from . import sampledata
+from engine.scheduleManager import ScheduleManager as ScheduleManager
+from engine.user import User as User
+from engine.employee import Employee as Employee
+from engine.location import Location as Location
 
 class TestRun(unittest.TestCase):
 
     def setUp(self):
-        self.sm = models.ScheduleManager()
-
+        from . import sampledata
+        self.sm = ScheduleManager()
         # Create Test Employee
         self.tc1 = "010"
-        self.candidate1 = models.Employee(sampledata.e1av, typecode=self.tc1, pid=1)
-        self.candidate2 = models.Employee(sampledata.e2av, typecode=self.tc1, pid=2)
-        self.candidate3 = models.Employee(sampledata.e3av, typecode=self.tc1, pid=3)
-        self.candidate4 = models.Employee(sampledata.e4av, typecode=self.tc1, pid=4)
+        e1av = copy.deepcopy(sampledata.e1av)
+        e2av = copy.deepcopy(sampledata.e2av)
+        e3av = copy.deepcopy(sampledata.e3av)
+        e4av = copy.deepcopy(sampledata.e4av)
+        self.candidate1 = Employee(e1av, typecode=self.tc1, pid=1)
+        self.candidate2 = Employee(e2av, typecode=self.tc1, pid=2)
+        self.candidate3 = Employee(e3av, typecode=self.tc1, pid=3)
+        self.candidate4 = Employee(e4av, typecode=self.tc1, pid=4)
         # Create Test Location
-        self.location1 = models.Location()
+        self.location1 = Location(typecode=sampledata.loc1["type"], scalarWeight=sampledata.loc1["scalar_weight"], requirements=sampledata.loc1["requirements"])
         self.location1.timeslots = sampledata.loc1
 
         # Add employee to location and location to schedule manager
-        self.location1.add_possible_candidate(self.candidate1)
-        self.location1.add_possible_candidate(self.candidate2)
-        self.location1.add_possible_candidate(self.candidate3)
-        self.location1.add_possible_candidate(self.candidate4)
+        self.sm.add_candidate(self.candidate1)
+        self.sm.add_candidate(self.candidate2)
+        self.sm.add_candidate(self.candidate3)
+        self.sm.add_candidate(self.candidate4)
         self.sm.add_location(self.location1)
 
     def tearDown(self):
         del self.sm
         del self.candidate1
+        del self.candidate2
+        del self.candidate3
+        del self.candidate4
         del self.location1
         del self.tc1
 
     def test_make(self):
-        self.assertTrue(isinstance(self.sm, models.ScheduleManager))
+        self.assertTrue(isinstance(self.sm, ScheduleManager))
 
     def test_calculate_need(self):
         """
@@ -43,8 +52,9 @@ class TestRun(unittest.TestCase):
 
         # Call the calculate_need() function for a location in schedule_manager
         # This should populate the need array for the Location object
-        self.location1.calculate_need()
-        self.assertIsNotNone(self.location1.need)
+        self.sm.calculate_need()
+        for l in self.sm.locations:
+            self.assertIsNotNone(l.need)
 
     def test_initialize_location_schedule(self):
         """
@@ -55,8 +65,8 @@ class TestRun(unittest.TestCase):
         # Call the initialize_dimensions() function for the location
         # This should initialize the dimensions of the schedule to match the
         # dimensions of the timeslot requirements
-        width = len(self.sm.locations[0].timeslots[0]["requirements"])
-        height = len(self.sm.locations[0].timeslots[0]["requirements"][0])
+        width = len(self.sm.locations[0].requirements)
+        height = len(self.sm.locations[0].requirements[0])
         self.sm.locations[0].initialize_dimensions(width, height, 2)
 
         self.assertEqual(len(self.sm.locations[0].schedule), width)
@@ -74,7 +84,7 @@ class TestRun(unittest.TestCase):
         timeslot2 = (1,1) # A time when the employee is available
 
         pre_schedule = np.copy(self.candidate1.schedule)
-        pre_availability = np.copy(self.candidate1.availability)
+        pre_availability = np.copy(self.candidate1.pre_availability)
 
         # Attempt to schedule where employee is unavailable
         self.candidate1.schedule_at(timeslot1)
@@ -92,13 +102,13 @@ class TestRun(unittest.TestCase):
         # Different as result of successful scheduling, employee availability modified
         self.assertNotEqual(self.candidate1.availability[1][1], pre_availability[1][1])
 
-    def test_greatest_need(self):
+    def test_location_greatest_need(self):
         """
         Tests Location object's greatest_need() function for correct return type
         """
         # Call the calculate_need() function for a location in schedule_manager
         # This should populate the need array for the Location object
-        self.location1.calculate_need()
+        self.sm.calculate_need()
 
         # Call the greatest_need() function, which returns integer, tuple, self
         timeslots, loc = self.location1.greatest_need()
@@ -110,39 +120,40 @@ class TestRun(unittest.TestCase):
         self.assertTrue(isinstance(timeslots, list))
         self.assertTrue(isinstance(timeslots[0], tuple))
 
-    def test_schedule_greatest_need(self):
+    def test_all_greatest_need(self):
         """
-        Tests that the function schedule_greatest_need() correctly assigns a User
-        to the calendar and adjusts requirements accordingly.
+        Tests schedule manager's greatest_need function for correct return type
         """
+        self.sm.calculate_need()
+        needs = self.sm.greatest_need()
+        self.assertIsNotNone(needs)
+        for i in range(10):
+            x = random.randint(0, len(needs)-2)
+            self.assertTrue(needs[x][0] <= needs[x+1][0])
 
-        width = len(self.sm.locations[0].timeslots[0]["requirements"])
-        height = len(self.sm.locations[0].timeslots[0]["requirements"][0])
-        self.sm.locations[0].initialize_dimensions(width, height, 2)
-
-        # Call the calculate_need() function for a location in schedule_manager
-        # This should populate the need array for the Location object
-        self.location1.calculate_need()
-        timeslots, loc = self.location1.greatest_need()
-        self.location1.schedule_greatest_need()
-        self.location1.schedule_greatest_need()
-        for x in range(self.location1.schedule.shape[0]) :
-            for y in range(self.location1.schedule.shape[1]) :
-                for z in range(self.location1.schedule.shape[2]) :
-                    candidate = self.location1.search_PID(self.location1.schedule[x][y][z])
-                    if(candidate != None ) :
-                        self.assertFalse(candidate.is_available_at((x,y)))
-                        self.assertTrue(candidate.schedule[x][y] == 1)
-        #print(self.location1.schedule)
-        a = np.zeros((self.location1.schedule.shape[0],self.location1.schedule.shape[1]))
-        b = np.zeros(a.shape)
-        for x in range(a.shape[0]) :
-            for y in range(a.shape[1]) :
-                a[x][y] = self.location1.schedule[x][y][0]
-                b[x][y] = self.location1.schedule[x][y][1]
-        print("\n")
-        print(a)
-        print(b)
+    def test_run_schedule(self):
+        self.sm.run_schedule()
+        #print (self.sm.cost)
+        # for l in self.sm.locations:
+        #     print (l.total_cost)
+        #     a = np.zeros((len(l.schedule), len(l.schedule[0])))
+        #     b = np.zeros(a.shape)
+        #     for i in range(len(l.schedule)):
+        #         for j in range(len(l.schedule[0])):
+        #             a[i][j] = l.schedule[i][j][0]
+        #             b[i][j] = l.schedule[i][j][1]
+        #     print("The schduled employees are:")
+        #     print (a)
+        #     print (b)
+        #     print("The location's remaining requirements are:")
+        #     print (l.requirements)
+        #     print("The remaining spots can be filled by the following candidates:")
+        #     for i in range(len(l.requirements)):
+        #         for j in range(len(l.requirements[0])):
+        #             for c in self.sm.candidates:
+        #                 if c.is_available_at((i,j)):
+        #                     print("Candidate PID = " + str(c.pid) + " can fill timeslot (" + str(i) + "," + str(j) + ")" )
+        self.assertTrue(True)
 
 if __name__ == "__main__":
     unittest.main()

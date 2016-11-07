@@ -1,12 +1,14 @@
 import unittest
-from engine import models
-
+from engine.scheduleManager import ScheduleManager as ScheduleManager
+from engine.user import User as User
+from engine.employee import Employee as Employee
+from engine.location import Location as Location
 from . import sampledata
 
 class TestCreate(unittest.TestCase):
 
     def setUp(self):
-        self.sm = models.ScheduleManager()
+        self.sm = ScheduleManager()
 
     def tearDown(self):
         del self.sm
@@ -19,9 +21,7 @@ class TestCreate(unittest.TestCase):
             (2) schedule manager contains the correct location object
         """
 
-        location1 = models.Location()
-        location1.timeslots = sampledata.loc1
-
+        location1 = Location(typecode=sampledata.loc1["type"], scalarWeight=sampledata.loc1["scalar_weight"], requirements=sampledata.loc1["requirements"])
         self.sm.add_location(location1)
 
         self.assertTrue(len(self.sm.locations) >= 1)
@@ -41,26 +41,27 @@ class TestCreate(unittest.TestCase):
 
         tc1 = "010"
         tc2 = "000"
-        candidate1 = models.Employee(sampledata.e1av, typecode=tc1, pid=1)
-        candidate2 = models.Employee(sampledata.e2av, typecode=tc2, pid=2)
+        candidate1 = Employee(sampledata.e1av, typecode=tc1, pid=1)
+        candidate2 = Employee(sampledata.e2av, typecode=tc2, pid=2)
 
         self.assertEqual(candidate1.typecode, tc1)
         self.assertEqual(candidate1.pid, 1)
         self.assertEqual(candidate2.typecode, tc2)
         self.assertEqual(candidate2.pid, 2)
 
-        location1 = models.Location()
-        location1.timeslots = sampledata.loc1
+        location1 = Location(typecode=sampledata.loc1["type"], scalarWeight=sampledata.loc1["scalar_weight"], requirements=sampledata.loc1["requirements"])
+        location2 = Location(typecode=sampledata.loc2["type"], scalarWeight=sampledata.loc2["scalar_weight"], requirements=sampledata.loc2["requirements"])
 
-        location1.add_possible_candidate(candidate1)
-        location1.add_possible_candidate(candidate2)
+        self.sm.add_candidate(candidate1)
+        self.sm.add_candidate(candidate2)
         self.sm.add_location(location1)
+        self.sm.add_location(location2)
 
-        self.assertIs(self.sm.locations[0].possible_candidates[0], candidate1)
-        self.assertEqual(self.sm.locations[0].possible_candidates[0].pid, 1)
-        self.assertIs(self.sm.locations[0].possible_candidates[1], candidate2)
-        self.assertEqual(self.sm.locations[0].possible_candidates[1].pid, 2)
-        self.assertEqual(len(self.sm.locations[0].possible_candidates), 2)
+        self.assertEqual(len(self.sm.candidates), 2)
+        self.assertIs(self.sm.candidates[0], candidate1)
+        self.assertEqual(self.sm.candidates[0].pid, 1)
+        self.assertIs(self.sm.candidates[1], candidate2)
+        self.assertEqual(self.sm.candidates[1].pid, 2)
 
     def test_add_requirements(self):
         """
@@ -79,14 +80,15 @@ class TestCreate(unittest.TestCase):
                 }
             ]
         """
-        location1 = models.Location()
-        location1.timeslots = sampledata.loc1
+        location1 = Location(typecode=sampledata.loc1["type"], scalarWeight=sampledata.loc1["scalar_weight"], requirements=sampledata.loc1["requirements"])
         self.sm.add_location(location1)
 
-        self.assertEqual(self.sm.locations[0].timeslots, location1.timeslots)
-        for i in range(len(sampledata.loc1[0]["requirements"])):
-            for j in range(len(sampledata.loc1[0]["requirements"][0])):
-                self.assertEqual(self.sm.locations[0].timeslots[0]["requirements"][i][j], sampledata.loc1[0]["requirements"][i][j])
+        self.assertEqual(self.sm.locations[0].requirements.all(), location1.requirements.all())
+        self.assertEqual(self.sm.locations[0].type, location1.type)
+        self.assertEqual(self.sm.locations[0].scalarWeight, location1.scalarWeight)
+        for i in range(len(sampledata.loc1["requirements"])):
+            for j in range(len(sampledata.loc1["requirements"][0])):
+                self.assertEqual(self.sm.locations[0].requirements[i][j], sampledata.loc1["requirements"][i][j])
 
 if __name__ == "__main__":
     unittest.main()
